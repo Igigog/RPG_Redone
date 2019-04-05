@@ -17,14 +17,14 @@ Enemy = namedtuple('Enemy', 'health attack armor lvl golddrop');   enemies = {}
 Relation = namedtuple('Relation', 'dict file type')
 
 
-relations = [Relation(buttons, 'buttons.csv', Button),
-             Relation(nonbuttons, 'nonbuttons_gui.csv', NonbuttonElement),
-             Relation(modes, 'modes.csv', tuple),
-             Relation(weapons, 'weapons.csv', Weapon),
-             Relation(armors, 'armor.csv', Armor),
-             Relation(loots, 'loot.csv', Loot),
-             Relation(locations, 'locations.csv', Location),
-             Relation(enemies, 'enemies.csv', Enemy),
+relations = [Relation(buttons, 'database/buttons.csv', Button),
+             Relation(nonbuttons, 'database/nonbuttons_gui.csv', NonbuttonElement),
+             Relation(modes, 'database/modes.csv', tuple),
+             Relation(weapons, 'database/weapons.csv', Weapon),
+             Relation(armors, 'database/armor.csv', Armor),
+             Relation(loots, 'database/loot.csv', Loot),
+             Relation(locations, 'database/locations.csv', Location),
+             Relation(enemies, 'database/enemies.csv', Enemy),
              ]
 
 

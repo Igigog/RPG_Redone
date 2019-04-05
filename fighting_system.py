@@ -52,8 +52,11 @@ class Player(Mob):
         self.location = locations[0]
         self.garbageinv = []
 
-    @classmethod
-    def fibonacci(cls):
+    def reset(self):
+        self.__init__()
+
+    @staticmethod
+    def fibonacci():
         x = 2
         y = 1
         while True:
