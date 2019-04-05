@@ -1,0 +1,12 @@
+n,equipment,armor,dodge,lvl,price
+1,Nothing,0,1,0,0
+2,Rags,1,1,1,5
+3,Armored Clothes,2,1,2,10
+4,Leather Armor,3,"0,95",3,25
+5,Chainmail,4,"0,9",3,60
+6,Copper Armor,4,"0,7",3,35
+7,Iron Armor,5,"0,6",3,50
+8,Steel Armor,6,"0,5",5,70
+9,Assassin's Armor,4,"1,5",7,90
+10,Pirate's Hat,1,3,9,150
+11,Igi's Armor,10,"1,6",10,1000

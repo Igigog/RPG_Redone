@@ -1,0 +1,7 @@
+n,mode,buttons,,,,
+1,main,savebtn,invbtn,fndbtn,srbtn,mapbtn
+2,fight,escbtn,atkbtn,,,
+3,inventory,cngarmorbtn,extinvbtn,cngwpnbtn,armorbox,wpnbox
+4,dead,startbtn,loadbtn,,,
+5,map,extmapbtn,cnglocbtn,marketbtn,mapbox,
+6,market,buybtn,extmarket,sellbtn,markettab,marketbox
