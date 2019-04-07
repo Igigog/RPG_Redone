@@ -6,11 +6,11 @@ from fighting_system import *
 
 
 class Game:
-    def __init__(self):
-        self.game = QApplication(sys.argv)
-        global app
-        app = App()
+    game = QApplication(sys.argv)
+    global app
+    app = App()
 
+    def __init__(self):
         global player
         player = Player()
 
