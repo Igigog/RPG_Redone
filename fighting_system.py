@@ -1,41 +1,52 @@
+from collections import namedtuple
 from random import randint
-from lists import weapons, opponents, locations, armors, loot
+from database_values import weapons, enemies, locations, armors, loots
 
 
 class Mob:
     def __init__(self, self_list):
-        self.weapon = weapons[0]
-        self.equip = armors[0]
+        self.weapon = weapons['Nothing']
+        self.equip = armors['Nothing']
         self.name = self_list[0]
         self.starthealth = self_list[1]
-        self.health = self_list[1]
-        self.attack = self_list[2]
-        self.armor = self_list[3]
+        self._health = self_list[1]
+        self.attack_stat = self_list[2]
+        self.armor_stat = self_list[3]
         self.lvl = self_list[4]
         self.gold = self_list[5]
-        self.crit = 1
-        self.dodge = 1
+        self.crit_chance = 1
+        self.dodge_chance = 1
         self.energy = 5
+
+    @property
+    def health(self):
+        return self._health
+
+    @health.setter
+    def health(self, value):
+        if value < 1:
+            self._health = 0
+        self._health = value
 
     def crit(self):
         critical = randint(1, 1000)
-        if self.crit * 100.0 >= critical:
+        if self.crit_chance * 100.0 >= critical:
             return True
         else:
             return False
 
     def dodge(self):
         dodge_try = randint(1, 1000)
-        if self.dodge * 100.0 >= dodge_try:
+        if self.dodge_chance * 100.0 >= dodge_try:
             return True
         else:
             return False
 
-    def armor_stat(self, damage):
-        if damage * 2 <= self.armor:
+    def armor_resist(self, damage):
+        if damage * 2 <= self.armor_stat:
             return 0
-        elif damage >= self.armor * 4:
-            return damage - (self.armor // 2)
+        elif damage >= self.armor_stat * 4:
+            return damage - (self.armor_stat // 2)
         else:
             return damage // 2 + 1
 
@@ -44,28 +55,26 @@ class Player(Mob):
     def __init__(self):
         self_list = ['player', 20, 1, 0, 1, 0]
         super().__init__(self_list)
-        self.weapon = weapons[0]
-        self.equip = armors[0]
         self.exp = 0
         self.wpninventory = [self.weapon]
         self.armorinventory = [self.equip]
-        self.location = locations[0]
+        self.location = locations['Starting Village']
         self.garbageinv = []
 
     def reset(self):
         self.__init__()
 
     @staticmethod
-    def fibonacci():
+    def fibonacci(n):
         x = 2
         y = 1
-        while True:
+        for _ in range(n-1):
             x, y = y, x+y
-            yield y
+        return y
 
     def search_treasure(self):
         summa = 0
-        for x in range(1, len(loot) + 1):   # search for triangle num
+        for x in range(1, len(loots) + 1):   # search for triangle num
             summa += x
         rand_ch = randint(1, summa)
         start_stat = 1
@@ -73,87 +82,113 @@ class Player(Mob):
             if rand_ch > start_stat:           # drop chance of last element = 1/summa etc.
                 start_stat += step             # drop chance of reversed n'th element = n'th term/sum
             else:
-                n = len(loot) - (step - 1)  # step starts from 2 therefore we need to subtract 1
+                n = len(loots) - (step - 1)  # step starts from 2 therefore we need to subtract 1
                 break
-        self.garbageinv.append(loot[n])
-        return loot[n][0]
+        self.garbageinv.append(loots.values()[n])
+        return loots.values()[n].name
 
     def find_opponent(self):
+
         enemy_list = []
-        for x in opponents:
-            if x[4] in range(self.location[1], self.location[1] + 2):
-                enemy_list.append(x)
+        for enemy in enemies.values():
+            if enemy.lvl in range(self.location.lvl, self.location.lvl + 2):
+                enemy_list.append(enemy)
+
         num = randint(0, len(enemy_list) - 1)
-        self.opponent = Mob(enemy_list[num])
-        self.opponent.opponent = self
+        return Mob(enemy_list[num])
+
+    def eat_opponent(self, opponent):
+        self.health = self.starthealth
+        self.exp += 1
+        self.energy = 5
+        self.gold += opponent.gold
+        self.lvl_up()
 
     def lvl_up(self):
-        lvl = 1
-        for x in self.fibonacci():
-            if self.exp >= x:
-                lvl += 1
-            else:
-                break
-        self.lvl = lvl
+        if self.fibonacci(self.lvl + 1) <= self.exp:
+            print(self.fibonacci(self.lvl + 1), ': ', self.exp)
+            self.lvl += 1
+            self.lvl_up()
+            return True
+        else:
+            return False
 
 
-def vivod(result):
-    main_text = ''
-    if not result:
-        return 'Dodge! No damage dealt.\n'
-    else:
-        if result[2]:
-            main_text += 'Critical strike! Damage doubled.\n'
-        main_text += '%s deal %s damage to %s. %s is on %s hp.\n' % (
-            result[0].name.title(), result[3], result[1].name, result[1].name.title(), result[1].health)
-        return main_text
+class Fight:
+    def __init__(self, player, opponent):
+        self.player = player
+        self.opponent = opponent
+        self.Result = namedtuple(
+            'Result', 'attacker defender dodge player_crit player_damage')
 
+    def fight_step(self):
+        outcome = ''
 
-def attack(player):
-    enemy = player.opponent
-    player_damage = player.attack + player.weapon[1]
+        fight_result = self.Result(*self.attack(self.player, self.opponent))
+        outcome += self.vivod(fight_result)
 
-    if dodge(player):
-        return False
-    else:
-        if crit(player):
+        fight_result = self.Result(*self.attack(self.opponent, self.player))
+        outcome += self.vivod(fight_result) + '\n\n'
+
+        if self.is_won():
+            outcome += self.win()
+        return outcome
+
+    @staticmethod
+    def vivod(fight_result):
+        main_text = ''
+        if fight_result.dodge:
+            return 'Dodge! No damage dealt.\n'
+        else:
+            if fight_result.player_crit:
+                main_text += 'Critical strike! Damage doubled.\n'
+            main_text += f'{fight_result.attacker.name.title()} ' \
+                         f'deal {fight_result.player_damage} damage ' \
+                         f'to {fight_result.defender.name}. ' \
+                         f'{fight_result.defender.name.title()} is ' \
+                         f'on {fight_result.defender.health} hp.\n'
+            return main_text
+
+    def attack(self, attacker, defender):
+        player_damage = self.player.attack_stat + self.player.weapon.attack
+        dodge = False
+        if defender.dodge():
+            dodge = True
+            player_damage = 0
+
+        if attacker.crit():
             player_crit = True
             player_damage *= 2
         else:
-            player_damage = armor_stat(enemy, player_damage)
+            player_damage = self.opponent.armor_resist(player_damage)
             player_crit = False
-        enemy.health -= player_damage
-        if enemy.health < 1:
-            enemy.health = 0
-        return [player, enemy, player_crit, player_damage]
 
+        defender.health -= player_damage
+        if defender.health < 1:
+            defender.health = 0
 
-def pobeditel(player):
-    if player.opponent.health < 1:
-        return True
-    elif player.health < 1:
-        return False
+        statist = (attacker, defender, dodge, player_crit, player_damage)
+        return statist
 
+    def is_won(self):
+        if self.opponent.health < 1:
+            return True
+        elif self.player.health < 1:
+            return False
 
-def pobeg(player):
-    if randint(1, 4) == 1:
-        player.health = player.starthealth
-        player.opponent = ''
-        return True
-    else:
-        player.health -= player.opponent.attack
-        return False
+    def escape(self):
+        if randint(1, 4) == 1:
+            self.player.health = self.player.starthealth
+            return True
+        else:
+            self.player.health -= self.opponent.attack
+            return False
 
-
-def win(player):
-    startlvl = player.lvl
-    win_text = 'Congratulations! You win!\nHealth restored\nExp +1\nGold + %s\n\n' % player.opponent.gold
-    player.health = player.starthealth
-    player.exp += 1
-    player.energy = 5
-    player.gold += player.opponent.gold
-    player.opponent = ''
-    player.lvl_up()
-    if player.lvl > startlvl:
-        win_text += 'Level up! Your lvl is now %s\n' % player.lvl
-    return win_text
+    def win(self):
+        self.player.eat_opponent(self.opponent)
+        win_text = f'Congratulations! You win!\n' \
+                   f'Health restored\nExp +1\n' \
+                   f'Gold + {self.opponent.gold}\n\n'
+        if self.player.lvl_up():
+            win_text += f'Level up! Your lvl is now {self.player.lvl}\n'
+        return win_text

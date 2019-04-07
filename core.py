@@ -3,60 +3,64 @@ import pickle
 from PyQt5.QtWidgets import QApplication
 from GUI import App
 from fighting_system import *
-from database_values import buttons as buttons_dict
+
 
 class Game:
-
     def __init__(self):
+        self.game = QApplication(sys.argv)
         global app
         app = App()
-        self.game = QApplication(sys.argv)
 
         global player
         player = Player()
 
-        global buttons
-        buttons = app.elements
+    def connect_elements(self):
+        """connect last elements from GUI with functions"""
 
-    def connect_buttons(self):
-        """connect all buttons from GUI with functions"""
-
-        for button in buttons_dict:
-            if buttons_dict[button].func[:6] == 'lambda':
-                exec(f'app.{button}.clicked.connect({buttons_dict[button].func})')
-        app.markettab.currentChanged.connect(self.change_market_mode)
-        app.label.textChanged.connect(self.update_stats)
+        app.elements['markettab'].currentChanged.connect(self.change_market_mode)
+        app.main_label.textChanged.connect(self.update_stats)
 
     @staticmethod
     def update_stats():
         app.statlabel.setText(f'LVL: {player.lvl}\n'
                               f'EXP: {player.exp}\n'
-                              f'ATK: {(player.attack + player.weapon[1])}\n'
-                              f'DEF: {player.armor}\n'
+                              f'ATK: {(player.attack_stat + player.weapon[1])}\n'
+                              f'DEF: {player.armor_stat}\n'
                               f'ARM: {player.equip[0]}\n'
                               f'WPN: {player.weapon[0]}\n'
                               f'GOLD: {player.gold}')
 
     def start(self):
-        self.connect_buttons()
+        self.connect_elements()
         sys.exit(self.game.exec_())
 
-    @App.buttonfunction(buttons['loadbtn'])
+    @app.buttonfunction('startbtn')
+    def start_clicked():
+        """ Hide start buttons and start mainloop """
+
+        app.main_label.setText('Now the Game begins!\n\n')
+        app.switch_mode('main')
+
+    @app.buttonfunction('extmarket', 'extmapbtn', 'extinvbtn')
+    def to_main_mode():
+        app.switch_mode(['main_mode'])
+
+    @app.buttonfunction('loadbtn')
     def load_clicked():
+        global player
         player.reset()
 
         try:
             with open('database/save.pickle', 'rb') as player_savefile:
-                global player
                 player = pickle.load(player_savefile)
         except EnvironmentError:
-            app.label.setText('Save corrupted\n\n')
+            app.main_label.setText('Save corrupted\n\n')
             return
         else:
-            app.label.setText('Load successful')
+            app.main_label.setText('Load successful')
             app.mode_switch('main')
 
-    @App.buttonfunction(buttons['savebtn'])
+    @app.buttonfunction('savebtn')
     def save_clicked():
         try:
             with open('database/save.pickle', 'wb') as savefile:
@@ -66,37 +70,39 @@ class Game:
         else:
             app.main_label.setText('Save successful')
 
-    @App.buttonfunction(buttons['fndbtn'])
+    @app.buttonfunction('fndbtn')
     def find_clicked():
-        player.find_opponent()
+        enemy = player.find_opponent()
+        global fight
+        fight = Fight(player, enemy)
         app.switch_mode('fight')
-        app.label.setText(f'Your opponent is {player.opponent.name}\n\n')
+        app.main_label.setText(f'Your opponent is {fight.opponent.name}\n\n')
 
-    @App.buttonfunction(buttons['srbtn'], static=False)
+    @app.buttonfunction('srbtn', static=False)
     def search_clicked(self):
-        app.label.clear()
+        app.main_label.clear()
         if randint(1, 10) < 3:
             self.find_clicked()
         elif player.energy:
             x = player.search_treasure()
-            app.label.insert_text('You found %s\n' % x)
+            app.main_label.insert_text(f'You found {x}\n')
             player.energy -= 1
         else:
-            app.label.insert_text('No energy\n')
+            app.main_label.insert_text('No energy\n')
 
-    @App.buttonfunction(buttons['invbtn'])
+    @app.buttonfunction('invbtn')
     def inv_clicked():
         app.armorbox.clear()
         app.wpnbox.clear()
-        app.label.setText('You weapon is %s\n' % player.weapon[0])
-        app.label.insert_text('You armor is %s\n\n' % player.equip[0])
+        app.main_label.setText(f'You weapon is {player.weapon.name}\n')
+        app.main_label.insert_text(f'You armor is {player.equip.name}\n\n')
         for x in player.wpninventory:
             app.wpnbox.addItem(x[0])
         for x in player.armorinventory:
             app.armorbox.addItem(x[0])
         app.switch_mode('inventory')
 
-    @App.buttonfunction(buttons['cngarmorbtn'])
+    @app.buttonfunction('cngarmorbtn')
     def change_armor():
         for x in player.armorinventory:
             if x[0] == app.armorbox.currentText():
@@ -104,87 +110,76 @@ class Game:
                 player.armor = x[1]
                 player.dodge = x[2]
                 break
-        app.label.insert_text(f'You armor is {player.equip[0]}\n\n')
+        app.main_label.insert_text(f'You armor is {player.equip[0]}\n\n')
 
-    @App.buttonfunction(buttons['cngwpnbtn'])
+    @app.buttonfunction('cngwpnbtn')
     def change_weapon():
         for x in player.wpninventory:
             if x[0] == app.wpnbox.currentText():
                 player.weapon = x
                 player.crit = player.weapon[2]
                 break
-        app.label.insert_text('You weapon is %s\n\n' % player.weapon[0])
+        app.main_label.insert_text(f'You weapon is {player.weapon.name}\n\n')
 
-
+    @staticmethod
     def win_check():
-        if pobeditel(player):
+        if fight.is_won():
             app.switch_mode('main')
-            app.label.insert_text(win(player))
-        elif pobeditel(player) is None:
+        elif fight.is_won() is None:
             pass
         else:
-            app.label.insert_text('You lose! Try again next time!')
+            app.main_label.insert_text('You lose! Try again next time!')
             app.switch_mode('dead')
 
-    @App.buttonfunction(buttons['atkbtn'])
-    def atk_clicked():
-        player_atk = attack(player)
-        enemy_atk = attack(player.opponent)
-        app.label.insert_text(vivod(player_atk) + vivod(enemy_atk) + '\n\n')
-        win_check()
+    @app.buttonfunction('atkbtn', static=False)
+    def atk_clicked(self):
+        text = fight.fight_step()
+        app.main_label.insert_text(text)
+        self.__class__.win_check()
 
-    @App.buttonfunction(buttons['escbtn'])
-    def esc_clicked():
-        if pobeg(player):
-            app.label.insert_text('You escaped c:\n\n')
+    @app.buttonfunction('escbtn', static=False)
+    def esc_clicked(self):
+        if fight.escape():
+            app.main_label.insert_text('You escaped c:\n\n')
             app.switch_mode('main')
         else:
-            app.label.insert_text('Escape failed :c\nYou get %s damage\n\n' % player.opponent.attack)
-            if player.health < 1:
-                app.label.insert_text('You lose! Try again next time!')
-                app.switch_mode('dead')
+            app.main_label.insert_text(f'Escape failed :c\nYou get {fight.opponent.attack} damage\n\n')
+            self.win_check()
 
-    @App.buttonfunction(buttons['mapbtn'])
+    @app.buttonfunction('mapbtn')
     def map_clicked():
-        app.mapbox.clear()
-        app.label.setText('Your location is %s\n\n' % player.location[0])
-        for loc in locations:
-            app.mapbox.addItem(loc[0])
+        app.elements['mapbox'].clear()
+        app.main_label.setText(f'Your location is {player.location.name}\n\n')
+        for location in locations:
+            app.elements['mapbox'].addItem(location)
         app.switch_mode('map')
 
-    @App.buttonfunction(buttons['cnglocbtn'])
+    @app.buttonfunction('cnglocbtn')
     def change_loc():
-        for loc in locations:
-            if app.mapbox.currentText() == loc[0]:
-                player.location = loc
-                break
-        app.label.insert_text('Your location is %s\n\n' % player.location[0])
-
+        player.location = locations[app.elements['mapbox'].currentText()]
+        app.main_label.insert_text(f'Your location is {player.location.name}\n\n')
 
     def weapons_market():
         app.marketbox.clear()
-        app.label.clear()
+        app.main_label.clear()
         for x in weapons:
-            if x[3] in range(player.location[1], player.location[1] + 3):
+            if x[3] in range(player.location.lvl, player.location.lvl + 3):
                 app.marketbox.addItem(x[0])
-                app.label.insert_text('%s  ATK:%s  COST:%s\n' % (x[0], x[1], x[4]))
-        app.label.insert_text('\n')
-
+                app.main_label.insert_text(f'{x.name}  ATK:{x.attack}  COST:{x.cost}\n')
+        app.main_label.insert_text('\n')
 
     def armor_market():
         app.marketbox.clear()
-        app.label.clear()
+        app.main_label.clear()
         for x in armors:
-            if x[3] in range(player.location[1], player.location[1] + 3):
+            if x[3] in range(player.location.lvl, player.location.lvl + 3):
                 app.marketbox.addItem(x[0])
-                app.label.insert_text('%s  DEF:%s  COST:%s\n' % (x[0], x[1], x[4]))
-        app.label.insert_text('\n')
+                app.main_label.insert_text(f'{x.name}  DEF:{x.armor}  COST:{x.cost}\n')
+        app.main_label.insert_text('\n')
 
-
-    def enter_market():
+    def enter_market(self):
         app.switch_mode('market')
-        weapons_market()
-
+        self.weapons_market()
 
     def buy_clicked():
         tab_indexes = {0: weapons, 1: armors}
@@ -197,11 +192,11 @@ class Game:
 
         item = current_list[app.marketbox.currentIndex()]
         if player.gold < item[4]:
-            app.label.insert_text('Not enough gold.\n\n')
+            app.main_label.insert_text('Not enough gold.\n\n')
             return False
 
         elif item in player.wpninventory or item in player.armorinventory:
-            app.label.insert_text('%s is already yours' % item[0])
+            app.main_label.insert_text(f'{item.name} is already yours')
             return False
 
         else:
@@ -210,20 +205,20 @@ class Game:
             else:
                 player.armorinventory.append(item)
             player.gold -= item[4]
-            app.label.insert_text(f'{item[0]} in now yours.\n')
+            app.main_label.insert_text(f'{item[0]} in now yours.\n')
             return True
 
 
     def sell_clicked():
         summa = 0
         if not player.garbageinv:
-            app.label.insert_text('No garbage.\n\n')
+            app.main_label.insert_text('No garbage.\n\n')
             return False
         for x in range(len(player.garbageinv)):
             summa += player.garbageinv[0][1]
             player.garbageinv.pop(0)
         player.gold += summa
-        app.label.insert_text('Garbage sold. You get %s gold.\n\n' % summa)
+        app.main_label.insert_text(f'Garbage sold. You get {summa} gold.\n\n')
 
     def change_market_mode(self):
         if app.markettab.currentIndex():
@@ -238,7 +233,3 @@ if __name__ == '__main__':
 
 
 
-""" Hide start buttons and start mainloop """
-
-        app.label.setText('Now the Game begins!\n\n')
-        app.switch_mode('main')

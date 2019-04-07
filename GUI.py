@@ -2,17 +2,18 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import \
     QWidget, QPushButton, QLabel, QGridLayout, QFrame, QComboBox, QTabBar, QTextEdit
 from PyQt5.QtGui import QIcon, QPalette, QColor, QTextCursor
-from database_values import buttons as buttons_dict, modes as modes_dict, nonbuttons as nonbuttons_dict
+from database_values import buttons as buttons_dict,\
+    modes as modes_dict, nonbuttons as nonbuttons_dict
 
 
 class TextConsole(QTextEdit):
     def insert_text(self, text):
         self.moveCursor(QTextCursor.End)
         self.insertPlainText(text)
+        self.moveCursor(QTextCursor.End)
 
 
 class App(QWidget):
-
     def __init__(self):
         super().__init__()
         self.elements = {}
@@ -21,6 +22,7 @@ class App(QWidget):
 
         self._init_ui()
         self.switch_mode('dead')
+        print('done')
 
     def _init_ui(self):
 
@@ -93,11 +95,11 @@ class App(QWidget):
         for element in self.elements:
             self.elements[element].hide()
 
-    @staticmethod
-    def buttonfunction(button, static=True):
+    def buttonfunction(self, *buttons, static=True):
 
         def real_decorator(func):
-            button.clicked.connect(func)
+            for button in buttons:
+                self.elements[button].clicked.connect(func)
             if static:
                 return staticmethod(func)
             else:
@@ -105,9 +107,8 @@ class App(QWidget):
 
         return real_decorator
 
-
     def switch_mode(self, ui_mode):
         self._hide_all()
 
-        for element in modes_dict[ui_mode]:
+        for element in modes_dict[ui_mode].elements:
             self.elements[element].show()
