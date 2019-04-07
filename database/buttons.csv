@@ -1,19 +1,19 @@
-n,button,text,grid_y,grid_x,func
-1,startbtn,Start,2,1,game_start
-2,loadbtn,Load,2,2,load_clicked
-3,atkbtn,Attack,2,2,atk_clicked
-4,escbtn,Escape,2,1,esc_clicked
-5,invbtn,Inventory,3,1,inv_clicked
-6,savebtn,Save,3,2,save_clicked
-7,srbtn,Search for a treasure,2,1,search_clicked
-8,fndbtn,Opponent,2,2,find_clicked
-9,mapbtn,Map,4,1,map_clicked
-10,cngwpnbtn,Change weapon,2,2,change_weapon
-11,extinvbtn,Exit inventory,4,1,"lambda: app.switch_mode(""main"")"
-12,cngarmorbtn,Change armor,3,2,change_armor
-13,cnglocbtn,Change location,2,2,change_loc
-14,extmapbtn,Exit map,3,1,"lambda: app.switch_mode(""main"")"
-15,buybtn,Buy,3,2,buy_clicked
-16,marketbtn,Market,3,2,enter_market
-17,extmarket,Exit Market,4,2,"lambda: app.switch_mode(""main"")"
-18,sellbtn,Sell,4,1,sell_clicked
+n,button,text,grid_y,grid_x
+1,startbtn,Start,2,1
+2,loadbtn,Load,2,2
+3,atkbtn,Attack,2,2
+4,escbtn,Escape,2,1
+5,invbtn,Inventory,3,1
+6,savebtn,Save,3,2
+7,srbtn,Search for a treasure,2,1
+8,fndbtn,Opponent,2,2
+9,mapbtn,Map,4,1
+10,cngwpnbtn,Change weapon,2,2
+11,extinvbtn,Exit inventory,4,1
+12,cngarmorbtn,Change armor,3,2
+13,cnglocbtn,Change location,2,2
+14,extmapbtn,Exit map,3,1
+15,buybtn,Buy,3,2
+16,marketbtn,Market,3,2
+17,extmarket,Exit Market,4,2
+18,sellbtn,Sell,4,1

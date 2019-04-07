@@ -5,6 +5,7 @@ from GUI import App
 from fighting_system import *
 
 
+# noinspection PyMethodParameters
 class Game:
     game = QApplication(sys.argv)
     global app
@@ -24,10 +25,10 @@ class Game:
     def update_stats():
         app.statlabel.setText(f'LVL: {player.lvl}\n'
                               f'EXP: {player.exp}\n'
-                              f'ATK: {(player.attack_stat + player.weapon[1])}\n'
+                              f'ATK: {(player.attack_stat + player.weapon.main_stat)}\n'
                               f'DEF: {player.armor_stat}\n'
-                              f'ARM: {player.equip[0]}\n'
-                              f'WPN: {player.weapon[0]}\n'
+                              f'ARM: {player.equip.name}\n'
+                              f'WPN: {player.weapon.name}\n'
                               f'GOLD: {player.gold}')
 
     def start(self):
@@ -55,7 +56,6 @@ class Game:
                 player = pickle.load(player_savefile)
         except EnvironmentError:
             app.main_label.setText('Save corrupted\n\n')
-            return
         else:
             app.main_label.setText('Load successful')
             app.mode_switch('main')
@@ -104,21 +104,12 @@ class Game:
 
     @app.buttonfunction('cngarmorbtn')
     def change_armor():
-        for x in player.armorinventory:
-            if x[0] == app.armorbox.currentText():
-                player.equip = x
-                player.armor = x[1]
-                player.dodge = x[2]
-                break
-        app.main_label.insert_text(f'You armor is {player.equip[0]}\n\n')
+        player.equip = armors[app.wpnbox.currentText()]
+        app.main_label.insert_text(f'You armor is {player.equip.name}\n\n')
 
     @app.buttonfunction('cngwpnbtn')
     def change_weapon():
-        for x in player.wpninventory:
-            if x[0] == app.wpnbox.currentText():
-                player.weapon = x
-                player.crit = player.weapon[2]
-                break
+        player.weapon = weapons[app.wpnbox.currentText()]
         app.main_label.insert_text(f'You weapon is {player.weapon.name}\n\n')
 
     @staticmethod
@@ -143,7 +134,7 @@ class Game:
             app.main_label.insert_text('You escaped c:\n\n')
             app.switch_mode('main')
         else:
-            app.main_label.insert_text(f'Escape failed :c\nYou get {fight.opponent.attack} damage\n\n')
+            app.main_label.insert_text(f'Escape failed :c\nYou get {fight.opponent.attack_stat} damage\n\n')
             self.win_check()
 
     @app.buttonfunction('mapbtn')
@@ -159,77 +150,68 @@ class Game:
         player.location = locations[app.elements['mapbox'].currentText()]
         app.main_label.insert_text(f'Your location is {player.location.name}\n\n')
 
-    def weapons_market():
+    @staticmethod
+    def fill_market(objective):
+        variants = {'weapons': (weapons, 'ATK'),
+                    'armor': (armors, 'DEF'),
+                    }
         app.marketbox.clear()
         app.main_label.clear()
-        for x in weapons:
-            if x[3] in range(player.location.lvl, player.location.lvl + 3):
-                app.marketbox.addItem(x[0])
-                app.main_label.insert_text(f'{x.name}  ATK:{x.attack}  COST:{x.cost}\n')
-        app.main_label.insert_text('\n')
-
-    def armor_market():
-        app.marketbox.clear()
-        app.main_label.clear()
-        for x in armors:
-            if x[3] in range(player.location.lvl, player.location.lvl + 3):
-                app.marketbox.addItem(x[0])
-                app.main_label.insert_text(f'{x.name}  DEF:{x.armor}  COST:{x.cost}\n')
+        market_type = variants[objective]
+        for x in market_type[0]:
+            if x.lvl in range(player.location.lvl, player.location.lvl + 3):
+                app.marketbox.addItem(x.name)
+                app.main_label.insert_text(f'{x.name}  {market_type[1]}:{x.main_stat}  COST:{x.cost}\n')
         app.main_label.insert_text('\n')
 
     def enter_market(self):
         app.switch_mode('market')
-        self.weapons_market()
+        self.fill_market('weapons')
 
+    @app.buttonfunction('buybtn')
     def buy_clicked():
         tab_indexes = {0: weapons, 1: armors}
+        current_tab = tab_indexes[app.markettab.currentIndex()]
+        item = current_tab[app.marketbox.currentText()]
 
-        current_list = list(tab_indexes[app.markettab.currentIndex()])  # just making a copy
-        current_list.pop(0)                     # removes Nothing
-        current_list = list(filter(
-            lambda x: x[3] in range(player.location[1], player.location[1] + 3),
-            current_list))  # filter by location lvl
-
-        item = current_list[app.marketbox.currentIndex()]
-        if player.gold < item[4]:
-            app.main_label.insert_text('Not enough gold.\n\n')
-            return False
-
-        elif item in player.wpninventory or item in player.armorinventory:
+        if item in player.wpninventory or \
+           item in player.armorinventory:
             app.main_label.insert_text(f'{item.name} is already yours')
             return False
 
+        elif player.gold < item.cost:
+            app.main_label.insert_text('Not enough gold.\n\n')
+            return False
+
         else:
-            if app.markettab.currentIndex():
-                player.wpninventory.append(item)
-            else:
-                player.armorinventory.append(item)
-            player.gold -= item[4]
-            app.main_label.insert_text(f'{item[0]} in now yours.\n')
+            inventory_indexes = {0: player.wpninventory, 1: player.armorinventory}
+            inventory = inventory_indexes[app.markettab.currentIndex()]
+            inventory.append(item)
+
+            player.gold -= item.cost
+            app.main_label.insert_text(f'{item.name} in now yours.\n')
             return True
 
-
+    @app.buttonfunction('sellbtn')
     def sell_clicked():
-        summa = 0
+        loot_sum = 0
         if not player.garbageinv:
             app.main_label.insert_text('No garbage.\n\n')
             return False
-        for x in range(len(player.garbageinv)):
-            summa += player.garbageinv[0][1]
+
+        for item in player.garbageinv:
+            loot_sum += item.cost
             player.garbageinv.pop(0)
-        player.gold += summa
-        app.main_label.insert_text(f'Garbage sold. You get {summa} gold.\n\n')
+
+        player.gold += loot_sum
+        app.main_label.insert_text(f'Garbage sold. You get {loot_sum} gold.\n\n')
 
     def change_market_mode(self):
-        if app.markettab.currentIndex():
-            self.armor_market()
-        else:
-            self.weapons_market()
+        tab_indexes = {0: 'weapons', 1: 'armor'}
+        current_tab = tab_indexes[app.markettab.currentIndex()]
+        self.fill_market(current_tab)
 
 
 if __name__ == '__main__':
     rpg = Game()
     rpg.start()
-
-
-

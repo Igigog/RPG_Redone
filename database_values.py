@@ -2,7 +2,7 @@ from csv import reader as csv_reader
 from collections import namedtuple
 
 # GUI
-Button = namedtuple('Button', 'name text grid_y grid_x func');               buttons = {}
+Button = namedtuple('Button', 'name text grid_y grid_x');               buttons = {}
 NonbuttonElement = namedtuple('NonbuttonElement', 'name grid_y grid_x');     nonbuttons = {}
 modes = {}
 
@@ -16,8 +16,8 @@ class Mode:
 
 
 # Fighting
-Weapon = namedtuple('Weapon', 'name attack crit lvl cost');             weapons = {}
-Armor = namedtuple('Armor', 'name armor dodge lvl price');              armors = {}
+Weapon = namedtuple('Weapon', 'name main_stat crit lvl cost');             weapons = {}
+Armor = namedtuple('Armor', 'name main_stat dodge lvl price');              armors = {}
 Loot = namedtuple('Loot', 'name cost lvl');                             loots = {}
 Location = namedtuple('Location', 'name lvl');                          locations = {}
 Enemy = namedtuple('Enemy', 'name health attack armor lvl golddrop');   enemies = {}
@@ -48,6 +48,7 @@ def int_converter(arguments):
     new_args = []
     for x in arguments:
         try:
+            x = float(x)
             x = int(x)
         except ValueError:
             pass

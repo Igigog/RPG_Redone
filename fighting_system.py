@@ -5,8 +5,8 @@ from database_values import weapons, enemies, locations, armors, loots
 
 class Mob:
     def __init__(self, self_list):
-        self.weapon = weapons['Nothing']
-        self.equip = armors['Nothing']
+        self._weapon = weapons['Nothing']
+        self._equip = armors['Nothing']
         self.name = self_list[0]
         self.starthealth = self_list[1]
         self._health = self_list[1]
@@ -27,6 +27,25 @@ class Mob:
         if value < 1:
             self._health = 0
         self._health = value
+
+    @property
+    def equip(self):
+        return self._equip
+
+    @equip.setter
+    def equip(self, value):
+        self.equip = value
+        self.dodge_chance = value.dodge
+        self.armor_stat = value.main_stat
+
+    @property
+    def weapon(self):
+        return self._weapon
+
+    @weapon.setter
+    def weapon(self, value):
+        self.weapon = value
+        self.crit_chance = 1 + value.crit
 
     def crit(self):
         critical = randint(1, 1000)
@@ -150,7 +169,7 @@ class Fight:
             return main_text
 
     def attack(self, attacker, defender):
-        player_damage = self.player.attack_stat + self.player.weapon.attack
+        player_damage = self.player.attack_stat + self.player.weapon.main_stat
         dodge = False
         if defender.dodge():
             dodge = True
