@@ -109,6 +109,7 @@ class App(QWidget):
 
     def switch_mode(self, ui_mode):
         self._hide_all()
-
+        print(list(modes_dict[ui_mode].elements))
         for element in modes_dict[ui_mode].elements:
+            print(element)
             self.elements[element].show()

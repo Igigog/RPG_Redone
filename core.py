@@ -7,7 +7,7 @@ from fighting_system import *
 
 # noinspection PyMethodParameters
 class Game:
-    game = QApplication(sys.argv)
+    my_game = QApplication(sys.argv)
     global app
     app = App()
 
@@ -33,7 +33,7 @@ class Game:
 
     def start(self):
         self.connect_elements()
-        sys.exit(self.game.exec_())
+        sys.exit(self.my_game.exec_())
 
     @app.buttonfunction('startbtn')
     def start_clicked():
@@ -44,7 +44,7 @@ class Game:
 
     @app.buttonfunction('extmarket', 'extmapbtn', 'extinvbtn')
     def to_main_mode():
-        app.switch_mode(['main_mode'])
+        app.switch_mode('main')
 
     @app.buttonfunction('loadbtn')
     def load_clicked():
@@ -58,7 +58,7 @@ class Game:
             app.main_label.setText('Save corrupted\n\n')
         else:
             app.main_label.setText('Load successful')
-            app.mode_switch('main')
+            app.switch_mode('main')
 
     @app.buttonfunction('savebtn')
     def save_clicked():
@@ -92,24 +92,24 @@ class Game:
 
     @app.buttonfunction('invbtn')
     def inv_clicked():
-        app.armorbox.clear()
-        app.wpnbox.clear()
+        app.elements['armorbox'].clear()
+        app.elements['wpnbox'].clear()
         app.main_label.setText(f'You weapon is {player.weapon.name}\n')
         app.main_label.insert_text(f'You armor is {player.equip.name}\n\n')
         for x in player.wpninventory:
-            app.wpnbox.addItem(x[0])
+            app.elements['wpnbox'].addItem(x.name)
         for x in player.armorinventory:
-            app.armorbox.addItem(x[0])
+            app.elements['armorbox'].addItem(x.name)
         app.switch_mode('inventory')
 
     @app.buttonfunction('cngarmorbtn')
     def change_armor():
-        player.equip = armors[app.wpnbox.currentText()]
+        player.equip = armors[app.elements['wpnbox'].currentText()]
         app.main_label.insert_text(f'You armor is {player.equip.name}\n\n')
 
     @app.buttonfunction('cngwpnbtn')
     def change_weapon():
-        player.weapon = weapons[app.wpnbox.currentText()]
+        player.weapon = weapons[app.elements['wpnbox'].currentText()]
         app.main_label.insert_text(f'You weapon is {player.weapon.name}\n\n')
 
     @staticmethod
@@ -126,7 +126,7 @@ class Game:
     def atk_clicked(self):
         text = fight.fight_step()
         app.main_label.insert_text(text)
-        self.__class__.win_check()
+        Game.win_check()
 
     @app.buttonfunction('escbtn', static=False)
     def esc_clicked(self):
@@ -135,7 +135,7 @@ class Game:
             app.switch_mode('main')
         else:
             app.main_label.insert_text(f'Escape failed :c\nYou get {fight.opponent.attack_stat} damage\n\n')
-            self.win_check()
+            Game.win_check()
 
     @app.buttonfunction('mapbtn')
     def map_clicked():
@@ -155,15 +155,16 @@ class Game:
         variants = {'weapons': (weapons, 'ATK'),
                     'armor': (armors, 'DEF'),
                     }
-        app.marketbox.clear()
+        app.elements['marketbox'].clear()
         app.main_label.clear()
         market_type = variants[objective]
         for x in market_type[0]:
             if x.lvl in range(player.location.lvl, player.location.lvl + 3):
-                app.marketbox.addItem(x.name)
+                app.elements['marketbox'].addItem(x.name)
                 app.main_label.insert_text(f'{x.name}  {market_type[1]}:{x.main_stat}  COST:{x.cost}\n')
         app.main_label.insert_text('\n')
 
+    @app.buttonfunction('marketbtn', static=False)
     def enter_market(self):
         app.switch_mode('market')
         self.fill_market('weapons')

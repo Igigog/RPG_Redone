@@ -200,7 +200,7 @@ class Fight:
             self.player.health = self.player.starthealth
             return True
         else:
-            self.player.health -= self.opponent.attack
+            self.player.health -= self.opponent.attack_stat
             return False
 
     def win(self):

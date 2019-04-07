@@ -8,11 +8,15 @@ modes = {}
 
 
 class Mode:
-    def __init__(self, massive):
-        self.name = massive[0]
-        self.elements = (x
-                        for x in massive[1:]
-                        if str(x))     # blank line check
+    def __init__(self, iterable):
+        not_first = False
+        self.elements = []
+        for x in iterable:
+            if not_first:
+                self.elements.append(x)
+            else:
+                self.name = x
+                not_first = True
 
 
 # Fighting
@@ -38,10 +42,11 @@ relations = [Relation(buttons, 'database/buttons.csv', Button),
 
 
 def type_interface(format_type, iterable):
+    no_blank_strings = (x for x in iterable if str(x))
     try:
-        return format_type([x for x in iterable if str(x)])
+        return format_type(no_blank_strings)
     except TypeError:
-        return format_type(*iterable)
+        return format_type(*no_blank_strings)
 
 
 def int_converter(arguments):
