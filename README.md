@@ -2,7 +2,7 @@
   RPG Redone
 Wanna make everything better
 
-My old good RPG was rewritten
+My old good RPG was rewritten.
 Still looks ugly, but idk how2do better
 
 TO DO:
