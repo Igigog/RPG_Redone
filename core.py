@@ -82,7 +82,7 @@ class Game:
     def search_clicked(self):
         app.main_label.clear()
         if randint(1, 10) < 3:
-            self.find_clicked()
+            Game.find_clicked()
         elif player.energy:
             x = player.search_treasure()
             app.main_label.insert_text(f'You found {x}\n')
@@ -104,7 +104,7 @@ class Game:
 
     @app.buttonfunction('cngarmorbtn')
     def change_armor():
-        player.equip = armors[app.elements['wpnbox'].currentText()]
+        player.equip = armors[app.elements['armorbox'].currentText()]
         app.main_label.insert_text(f'You armor is {player.equip.name}\n\n')
 
     @app.buttonfunction('cngwpnbtn')
@@ -134,7 +134,8 @@ class Game:
             app.main_label.insert_text('You escaped c:\n\n')
             app.switch_mode('main')
         else:
-            app.main_label.insert_text(f'Escape failed :c\nYou get {fight.opponent.attack_stat} damage\n\n')
+            app.main_label.insert_text(f'Escape failed :c\n'
+                                       f'You get {fight.opponent.attack_stat} damage\n\n')
             Game.win_check()
 
     @app.buttonfunction('mapbtn')
@@ -158,22 +159,22 @@ class Game:
         app.elements['marketbox'].clear()
         app.main_label.clear()
         market_type = variants[objective]
-        for x in market_type[0]:
-            if x.lvl in range(player.location.lvl, player.location.lvl + 3):
-                app.elements['marketbox'].addItem(x.name)
-                app.main_label.insert_text(f'{x.name}  {market_type[1]}:{x.main_stat}  COST:{x.cost}\n')
+        for item in market_type[0].values():
+            if item.lvl in range(player.location.lvl, player.location.lvl + 3):
+                app.elements['marketbox'].addItem(item.name)
+                app.main_label.insert_text(f'{item.name}  {market_type[1]}:{item.main_stat}  COST:{item.cost}\n')
         app.main_label.insert_text('\n')
 
     @app.buttonfunction('marketbtn', static=False)
     def enter_market(self):
         app.switch_mode('market')
-        self.fill_market('weapons')
+        Game.fill_market('weapons')
 
     @app.buttonfunction('buybtn')
     def buy_clicked():
         tab_indexes = {0: weapons, 1: armors}
-        current_tab = tab_indexes[app.markettab.currentIndex()]
-        item = current_tab[app.marketbox.currentText()]
+        current_tab = tab_indexes[app.elements['markettab'].currentIndex()]
+        item = current_tab[app.elements['marketbox'].currentText()]
 
         if item in player.wpninventory or \
            item in player.armorinventory:
@@ -186,7 +187,7 @@ class Game:
 
         else:
             inventory_indexes = {0: player.wpninventory, 1: player.armorinventory}
-            inventory = inventory_indexes[app.markettab.currentIndex()]
+            inventory = inventory_indexes[app.elements['markettab'].currentIndex()]
             inventory.append(item)
 
             player.gold -= item.cost
@@ -209,7 +210,7 @@ class Game:
 
     def change_market_mode(self):
         tab_indexes = {0: 'weapons', 1: 'armor'}
-        current_tab = tab_indexes[app.markettab.currentIndex()]
+        current_tab = tab_indexes[app.elements['markettab'].currentIndex()]
         self.fill_market(current_tab)
 
 

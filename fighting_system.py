@@ -34,7 +34,7 @@ class Mob:
 
     @equip.setter
     def equip(self, value):
-        self.equip = value
+        self._equip = value
         self.dodge_chance = value.dodge
         self.armor_stat = value.main_stat
 
@@ -44,7 +44,7 @@ class Mob:
 
     @weapon.setter
     def weapon(self, value):
-        self.weapon = value
+        self._weapon = value
         self.crit_chance = 1 + value.crit
 
     def crit(self):
@@ -92,19 +92,25 @@ class Player(Mob):
         return y
 
     def search_treasure(self):
-        summa = 0
-        for x in range(1, len(loots) + 1):   # search for triangle num
-            summa += x
-        rand_ch = randint(1, summa)
-        start_stat = 1
-        for step in range(2, summa):           # summa = 1+2+3+4+...+n n=len(weapons)
-            if rand_ch > start_stat:           # drop chance of last element = 1/summa etc.
-                start_stat += step             # drop chance of reversed n'th element = n'th term/sum
-            else:
-                n = len(loots) - (step - 1)  # step starts from 2 therefore we need to subtract 1
-                break
-        self.garbageinv.append(loots.values()[n])
-        return loots.values()[n].name
+        item_rarity = randint(0, 1000)
+        rarity_relations = {0: 1,
+                            301: 2,
+                            601: 3,
+                            801: 4,
+                            951: 5,
+                            }
+
+        for k in rarity_relations.keys():
+            if item_rarity > k:
+                rarity = rarity_relations[k]
+
+        items = tuple(filter(
+            lambda x: x.rarity == rarity,
+            loots.values()))
+        item = items[randint(0, len(items)-1)]
+
+        self.garbageinv.append(item)
+        return item.name
 
     def find_opponent(self):
 

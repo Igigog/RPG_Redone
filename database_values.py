@@ -21,8 +21,8 @@ class Mode:
 
 # Fighting
 Weapon = namedtuple('Weapon', 'name main_stat crit lvl cost');             weapons = {}
-Armor = namedtuple('Armor', 'name main_stat dodge lvl price');              armors = {}
-Loot = namedtuple('Loot', 'name cost lvl');                             loots = {}
+Armor = namedtuple('Armor', 'name main_stat dodge lvl cost');              armors = {}
+Loot = namedtuple('Loot', 'name cost lvl, rarity');                             loots = {}
 Location = namedtuple('Location', 'name lvl');                          locations = {}
 Enemy = namedtuple('Enemy', 'name health attack armor lvl golddrop');   enemies = {}
 
