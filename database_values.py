@@ -2,11 +2,12 @@ from csv import reader as csv_reader
 from collections import namedtuple
 
 # GUI
-Button = namedtuple('Button', 'name text grid_y grid_x');               buttons = {}
+Button = namedtuple('Button', 'name text grid_y grid_x');                    buttons = {}
 NonbuttonElement = namedtuple('NonbuttonElement', 'name grid_y grid_x');     nonbuttons = {}
 modes = {}
 
 
+# Needed to write a class bcs of unknown number of buttons
 class Mode:
     def __init__(self, iterable):
         not_first = False
@@ -42,6 +43,7 @@ relations = [Relation(buttons, 'database/buttons.csv', Button),
 
 
 def type_interface(format_type, iterable):
+    """ Remove empty elements and write data to a class """
     no_blank_strings = (x for x in iterable if str(x))
     try:
         return format_type(no_blank_strings)
@@ -50,6 +52,7 @@ def type_interface(format_type, iterable):
 
 
 def int_converter(arguments):
+    """ Check values for int/float and change type from string """
     new_args = []
     for x in arguments:
         try:
@@ -61,6 +64,7 @@ def int_converter(arguments):
     return new_args
 
 
+# Read csv files and write values to dicts
 for database_num in range(len(relations)):
     with open(relations[database_num].file) as data:
         for row in tuple(csv_reader(data))[1:]:

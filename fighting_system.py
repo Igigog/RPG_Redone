@@ -18,6 +18,8 @@ class Mob:
         self.dodge_chance = 1
         self.energy = 5
 
+    # SETTING PROPERTIES
+
     @property
     def health(self):
         return self._health
@@ -46,6 +48,8 @@ class Mob:
     def weapon(self, value):
         self._weapon = value
         self.crit_chance = 1 + value.crit
+
+    # FIGHT FUNCTIONS
 
     def crit(self):
         critical = randint(1, 1000)
@@ -80,9 +84,11 @@ class Player(Mob):
         self.location = locations['Starting Village']
         self.garbageinv = []
 
+    # makes new player
     def reset(self):
         self.__init__()
 
+    # for lvl checks
     @staticmethod
     def fibonacci(n):
         x = 2
@@ -111,6 +117,8 @@ class Player(Mob):
 
         self.garbageinv.append(item)
         return item.name
+
+    # FIGHT FUNCTIONS
 
     def find_opponent(self):
 
@@ -146,7 +154,9 @@ class Fight:
         self.Result = namedtuple(
             'Result', 'attacker defender dodge player_crit player_damage')
 
+    # MAIN FIGHT FUNCTION
     def fight_step(self):
+        """ Do every fight activities and return result text """
         outcome = ''
 
         fight_result = self.Result(*self.attack(self.player, self.opponent))
@@ -156,23 +166,10 @@ class Fight:
         outcome += self.vivod(fight_result) + '\n\n'
 
         if self.is_won():
-            outcome += self.win()
+            outcome += self.win_activities()
         return outcome
 
-    @staticmethod
-    def vivod(fight_result):
-        main_text = ''
-        if fight_result.dodge:
-            return 'Dodge! No damage dealt.\n'
-        else:
-            if fight_result.player_crit:
-                main_text += 'Critical strike! Damage doubled.\n'
-            main_text += f'{fight_result.attacker.name.title()} ' \
-                         f'deal {fight_result.player_damage} damage ' \
-                         f'to {fight_result.defender.name}. ' \
-                         f'{fight_result.defender.name.title()} is ' \
-                         f'on {fight_result.defender.health} hp.\n'
-            return main_text
+    # FUNCTIONS USED BY fight_step()
 
     def attack(self, attacker, defender):
         player_damage = self.player.attack_stat + self.player.weapon.main_stat
@@ -195,12 +192,6 @@ class Fight:
         statist = (attacker, defender, dodge, player_crit, player_damage)
         return statist
 
-    def is_won(self):
-        if self.opponent.health < 1:
-            return True
-        elif self.player.health < 1:
-            return False
-
     def escape(self):
         if randint(1, 4) == 1:
             self.player.health = self.player.starthealth
@@ -209,7 +200,30 @@ class Fight:
             self.player.health -= self.opponent.attack_stat
             return False
 
-    def win(self):
+    @staticmethod
+    def vivod(fight_result):
+        """ Return text of one attack """
+        main_text = ''
+        if fight_result.dodge:
+            return 'Dodge! No damage dealt.\n'
+        else:
+            if fight_result.player_crit:
+                main_text += 'Critical strike! Damage doubled.\n'
+            main_text += f'{fight_result.attacker.name.title()} ' \
+                f'deal {fight_result.player_damage} damage ' \
+                f'to {fight_result.defender.name}. ' \
+                f'{fight_result.defender.name.title()} is ' \
+                f'on {fight_result.defender.health} hp.\n'
+            return main_text
+
+    def is_won(self):
+        if self.opponent.health < 1:
+            return True
+        elif self.player.health < 1:
+            return False
+
+    def win_activities(self):
+        """ Do everything needed to end fight """
         self.player.eat_opponent(self.opponent)
         win_text = f'Congratulations! You win!\n' \
                    f'Health restored\nExp +1\n' \

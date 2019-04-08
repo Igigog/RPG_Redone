@@ -20,46 +20,21 @@ class App(QWidget):
         self.grid = QGridLayout()
         self.setLayout(self.grid)
 
-        self._init_ui()
+        self._init_gui()
         self.switch_mode('dead')
         print('done')
 
-    def _init_ui(self):
+    def _init_gui(self):
 
         def configure_window():
             self.setGeometry(300, 300, 750, 500)
             self.setWindowTitle('WITCHER WITH BLACKJACK AND PLOTVA')
             self.setWindowIcon(QIcon('ico.ico'))
 
-        def make_nonbuttons():
-            for element_name in nonbuttons_dict:
-                element_type = element_name[::-1][0:3][::-1]  # last three literals
-                if element_type == 'box':
-                    self.elements[element_name] = QComboBox()
-                elif element_type == 'tab':
-                    self.elements[element_name] = QTabBar()
-
-        def configure_tabs():
-            self.elements['markettab'].setShape(1)
-            self.elements['markettab'].addTab('Weapons')
-            self.elements['markettab'].addTab('Armor')
-
         def make_buttons():
             for button_name in buttons_dict:
                 chosen_button = buttons_dict[button_name]
                 self.elements[button_name] = QPushButton(chosen_button.text)
-
-        def place_everything():
-            self.grid.addWidget(self.main_label, 1, 1, 1, 2)
-            self.grid.addWidget(self.statlabel, 1, 3)
-
-            dicts = (buttons_dict, nonbuttons_dict)
-            for dictionary in dicts:
-                for element_name in dictionary:
-                    chosen_element = dictionary[element_name]
-                    self.grid.addWidget(self.elements[element_name], int(chosen_element.grid_y),
-                                        int(chosen_element.grid_x))
-                    self.elements[element_name].hide()
 
         def make_labels():
             self.main_label = TextConsole()
@@ -81,35 +56,59 @@ class App(QWidget):
             self.statlabel.setLineWidth(1)
             self.statlabel.setAlignment(Qt.AlignTop)
 
+        def make_nonbuttons():
+            for element_name in nonbuttons_dict:
+                element_type = element_name[::-1][0:3][::-1]  # last three literals
+                if element_type == 'box':
+                    self.elements[element_name] = QComboBox()
+                elif element_type == 'tab':
+                    self.elements[element_name] = QTabBar()
+
+        def configure_tabs():
+            self.elements['markettab'].setShape(1)
+            self.elements['markettab'].addTab('Weapons')
+            self.elements['markettab'].addTab('Armor')
+
+        def place_everything():
+            self.grid.addWidget(self.main_label, 1, 1, 1, 2)
+            self.grid.addWidget(self.statlabel, 1, 3)
+
+            dicts = (buttons_dict, nonbuttons_dict)
+            for elements_dict in dicts:
+                for element_name in elements_dict:
+                    chosen_element = elements_dict[element_name]
+                    self.grid.addWidget(self.elements[element_name], int(chosen_element.grid_y),
+                                        int(chosen_element.grid_x))
+                    self.elements[element_name].hide()
+
         configure_window()
         make_buttons()
         make_labels()
         make_nonbuttons()
-        make_nonbuttons()
         configure_tabs()
-
         place_everything()
+
         self.show()
 
     def _hide_all(self):
         for element in self.elements:
-            self.elements[element].hide()
+            self.elements[element].hide()  # hides every element possible, mb rework?
+
+    def switch_mode(self, ui_mode):
+        self._hide_all()
+        for element in modes_dict[ui_mode].elements:
+            self.elements[element].show()
 
     def buttonfunction(self, *buttons, static=True):
+        """ Connect buttons to function & makes function static
+            except static=False """
 
         def real_decorator(func):
             for button in buttons:
                 self.elements[button].clicked.connect(func)
             if static:
-                return staticmethod(func)
-            else:
+                return staticmethod(func)       # too many funcs to make them static
+            else:                               # so i did this
                 return func
 
         return real_decorator
-
-    def switch_mode(self, ui_mode):
-        self._hide_all()
-        print(list(modes_dict[ui_mode].elements))
-        for element in modes_dict[ui_mode].elements:
-            print(element)
-            self.elements[element].show()
